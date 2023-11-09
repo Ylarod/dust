@@ -98,7 +98,7 @@ impl DrawData<'_> {
         let mut new_bar = "".to_string();
         let idx = 5 - level.clamp(1, 4);
 
-        for c in self.percent_bar.chars() {
+        for c in self.percent_bar.chars().rev() {
             num_not_my_bar -= 1;
             if num_not_my_bar <= 0 {
                 new_bar.push(BLOCKS[0]);
@@ -108,7 +108,7 @@ impl DrawData<'_> {
                 new_bar.push(c);
             }
         }
-        new_bar
+        new_bar.chars().rev().collect()
     }
 }
 
