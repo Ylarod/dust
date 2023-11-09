@@ -282,21 +282,20 @@ fn get_printable_name<P: AsRef<Path>>(dir_name: &P, short_paths: bool) -> String
 
 fn pad_or_trim_filename(node: &DisplayNode, indent: &str, display_data: &DisplayData) -> String {
     let name = get_printable_name(&node.name, display_data.initial.short_paths);
+    let name = maybe_trim_filename(name, indent, display_data);
     let indent_and_name = format!("{indent} {name}");
     let width = UnicodeWidthStr::width(&*indent_and_name);
 
-    assert!(
-        display_data.longest_string_length >= width,
-        "Terminal width not wide enough to draw directory tree"
-    );
-
     // Add spaces after the filename so we can draw the % used bar chart.
-    let name_and_padding = name
-        + " "
-            .repeat(display_data.longest_string_length - width)
-            .as_str();
-
-    name_and_padding
+    if width < display_data.longest_string_length{
+        let name_and_padding = name
+            + " "
+                .repeat(display_data.longest_string_length - width)
+                .as_str();
+        name_and_padding
+    } else {
+        name
+    }
 }
 
 fn maybe_trim_filename(name_in: String, indent: &str, display_data: &DisplayData) -> String {
@@ -346,17 +345,17 @@ fn get_name_percent(
         let percents = format!(" {percent_size_str:>4}",);
         let name = pad_or_trim_filename(node, "", display_data);
         (percents, name)
-    // Bar chart being empty may come from either config or the screen not being wide enough
-    } else if !bar_chart.is_empty() {
-        let percent = display_data.percent_size(node) * 100.0;
-        let percent_size_str = format!("{percent:.0}%");
-        let percents = format!("│{bar_chart} │ {percent_size_str:>4}");
+    } else {
+        // Bar chart being empty may come from either config or the screen not being wide enough
+        let percents = if !bar_chart.is_empty() {
+            let percent = display_data.percent_size(node) * 100.0;
+            let percent_size_str = format!("{percent:.0}%");
+            format!("│{bar_chart} │ {percent_size_str:>4}")
+        } else {
+            "".into()
+        };
         let name_and_padding = pad_or_trim_filename(node, indent, display_data);
         (percents, name_and_padding)
-    } else {
-        let n = get_printable_name(&node.name, display_data.initial.short_paths);
-        let name = maybe_trim_filename(n, indent, display_data);
-        ("".into(), name)
     }
 }
 
